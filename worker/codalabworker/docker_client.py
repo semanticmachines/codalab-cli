@@ -343,19 +343,10 @@ nvidia-docker-plugin not available, no GPU support on this worker.
                     raise DockerException(start_response.read())
             return container_id
 
-        try:
-            container_id = _start_nvidia_smi()
-        except DockerException as e:
-            # The download image call is slow, even if the image is already
-            # available. Thus, we only make it if we know the image is not
-            # available. Start-up is much faster that way.
-            if 'No such image' in e.message:
-                def update_status(status):
-                    logger.info('Downloading Docker image for running nvidia-smi: ' + status)
-                self.download_image(docker_image, update_status)
-                container_id = _start_nvidia_smi()
-            else:
-                raise
+        def update_status(status):
+            logger.info('Downloading Docker image for running nvidia-smi: ' + status)
+        self.download_image(docker_image, update_status)
+        container_id = _start_nvidia_smi()
 
         return container_id
 
