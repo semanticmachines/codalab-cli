@@ -4,6 +4,9 @@ jobs:
     working_directory: ~/repo
     docker:
       - image: jder/codalab
+      - image: mysql:5
+        environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 1
     environment:
       CODALAB_USERNAME: codalab
       CODALAB_PASSWORD: testpassword
@@ -11,27 +14,31 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: ./setup.sh server
+      - run: ./setup.sh client
 
-      - run: mysql -e "CREATE DATABASE codalab_bundles;"
-      - run: ./codalab/bin/cl config server/engine_url mysql://root@localhost:3306/codalab_bundles
-      - run: ./codalab/bin/cl config cli/default_address http://localhost:2900
+      - run: mysql -h 127.0.0.1 -u root -e "CREATE DATABASE codalab_bundles;"
+      - run: ./codalab/bin/cl config server/engine_url mysql://root@127.0.0.1:3306/codalab_bundles
+      - run: ./codalab/bin/cl config server/rest_host 0.0.0.0
+      - run: ./codalab/bin/cl config cli/default_address http://127.0.0.1:2900
       - run: ./codalab/bin/cl config workers/default_docker_image ubuntu:14.04
-      - run: ./scripts/create-root-user.py $CODALAB_PASSWORD
+      - run: cat ~/.codalab/config.json
+      - run: ./venv/bin/python ./scripts/create-root-user.py $CODALAB_PASSWORD
       - run:
           command: './codalab/bin/cl server'
           background: true
       - run:
           command: './codalab/bin/cl bundle-manager'
           background: true
-      - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" > /home/ubuntu/.codalab/root.password
-      - run: chmod 600 /home/ubuntu/.codalab/root.password
+      - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" > ~/.codalab/root.password
+      - run: chmod 600 ~/.codalab/root.password
       - run:
-          command: './worker/codalabworker/worker.sh --server http://127.0.0.1:2900 --work-dir /home/ubuntu/.codalab/worker-scratch --slots 4 --password-file /home/ubuntu/.codalab/root.password --verbose'
+          command: 'source ./venv/bin/activate && ./worker/codalabworker/worker.sh --server http://127.0.0.1:2900 --work-dir ~/.codalab/worker-scratch --slots 4 --password-file ~/.codalab/root.password --verbose'
           background: true
+      - run: 'sleep 5' # give the services time to come up before trying to interact
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl work
       - run: ./codalab/bin/cl upload -c stuff
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl rm ^
-      - run: python test-cli.py default
+      - run: ./venv/bin/python test-cli.py default
 workflows:
   version: 2
   codalab:
