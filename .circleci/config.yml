@@ -3,15 +3,12 @@ jobs:
   build:
     working_directory: ~/repo
     docker:
-      - image: codalab/ubuntu:1.9
+      - image: jder/codalab
     environment:
       CODALAB_USERNAME: codalab
       CODALAB_PASSWORD: testpassword
     steps:
-      - run: sudo apt-get install -y sshpass
-      - run: pip install --upgrade setuptools
       - run: ./setup.sh server
-      - run: pip install --upgrade pip
 
       - run: mysql -e "CREATE DATABASE codalab_bundles;"
       - run: ./codalab/bin/cl config server/engine_url mysql://root@localhost:3306/codalab_bundles
