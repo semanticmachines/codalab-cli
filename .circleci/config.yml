@@ -1,0 +1,34 @@
+version: 2
+jobs:
+  working_directory: ~/repo
+  docker:
+    - image: codalab/ubuntu:1.9
+  environment:
+    CODALAB_USERNAME: codalab
+    CODALAB_PASSWORD: testpassword
+
+  build:
+    steps:
+      # TODO: Pre-install these in the docker image
+      - run: run: sudo apt-get install -y sshpass
+      - run: run: pip install --upgrade setuptools
+      - run: run: ./setup.sh server
+      - run: run: pip install --upgrade pip
+
+      - run: mysql -e "CREATE DATABASE codalab_bundles;"
+      - run: ./codalab/bin/cl config server/engine_url mysql://root@localhost:3306/codalab_bundles
+      - run: ./codalab/bin/cl config cli/default_address http://localhost:2900
+      - run: ./codalab/bin/cl config workers/default_docker_image ubuntu:14.04
+      - run: ./scripts/create-root-user.py $CODALAB_PASSWORD
+      - run: './codalab/bin/cl server':
+          background: true
+      - run: './codalab/bin/cl bundle-manager':
+          background: true
+      - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" > /home/ubuntu/.codalab/root.password
+      - run: chmod 600 /home/ubuntu/.codalab/root.password
+      - run: './worker/codalabworker/worker.sh --server http://127.0.0.1:2900 --work-dir /home/ubuntu/.codalab/worker-scratch --slots 4 --password-file /home/ubuntu/.codalab/root.password --verbose':
+          background: true
+      - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl work
+      - run: ./codalab/bin/cl upload -c stuff
+      - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl rm ^
+      - run: python test-cli.py default
