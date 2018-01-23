@@ -8,6 +8,8 @@ jobs:
       CODALAB_USERNAME: codalab
       CODALAB_PASSWORD: testpassword
     steps:
+      - checkout
+      - setup_remote_docker
       - run: ./setup.sh server
 
       - run: mysql -e "CREATE DATABASE codalab_bundles;"
