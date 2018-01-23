@@ -32,3 +32,10 @@ jobs:
       - run: ./codalab/bin/cl upload -c stuff
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl rm ^
       - run: python test-cli.py default
+
+workflows:
+  version: 2
+
+  codalab:
+    jobs:
+      - build
