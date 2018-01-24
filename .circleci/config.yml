@@ -10,6 +10,7 @@ jobs:
     environment:
       CODALAB_USERNAME: codalab
       CODALAB_PASSWORD: testpassword
+      PYTHONIOENCODING: "utf-8"
     steps:
       - checkout
       - setup_remote_docker

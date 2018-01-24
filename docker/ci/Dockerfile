@@ -15,3 +15,6 @@ RUN pip install virtualenv
 # Needed for CI
 RUN apt-get install -y sshpass
 RUN apt-get install -y mysql-client libmysqlclient-dev
+RUN apt-get install -y rsync
+RUN apt-get install -y zip
+RUN apt-get install -y git
