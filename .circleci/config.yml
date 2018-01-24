@@ -41,9 +41,11 @@ jobs:
       - run: ./codalab/bin/cl upload -c stuff
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl rm ^
       - run: |
+            # We do this to ensure the worker can run jobs (i.e. has the docker images it needs)
+            # and ensure we output something in the meantime so circle doesn't halt us.
             PRIME_CACHE_BUNDLE=$(./codalab/bin/cl run "echo hi")
             while true; do
-              sleep 1
+              sleep 10
               STATE=$(./codalab/bin/cl info -f state $PRIME_CACHE_BUNDLE)
               echo "Job state is $STATE"
               case "$STATE" in
