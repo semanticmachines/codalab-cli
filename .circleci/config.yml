@@ -13,6 +13,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+
+      # TODO: many of these requirements could be installed in the CI image to speed up builds
       - run: ./setup.sh server
       - run: ./setup.sh client
 
@@ -38,6 +40,29 @@ jobs:
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl work
       - run: ./codalab/bin/cl upload -c stuff
       - run: printf "$CODALAB_USERNAME\n$CODALAB_PASSWORD\n" | sshpass -p "" ./codalab/bin/cl rm ^
+      - run: |
+            PRIME_CACHE_BUNDLE=$(./codalab/bin/cl run "echo hi")
+            while true; do
+              sleep 1
+              STATE=$(./codalab/bin/cl info -f state $PRIME_CACHE_BUNDLE)
+              echo "Job state is $STATE"
+              case "$STATE" in
+                ready)
+                  break
+                  ;;
+                failed)
+                  echo "job failed"
+                  exit 1
+                  ;;
+                killed)
+                  echo "job killed"
+                  exit 1
+                  ;;
+                *)
+                  continue
+                  ;;
+              esac
+            done
       - run: ./venv/bin/python test-cli.py default
 workflows:
   version: 2
