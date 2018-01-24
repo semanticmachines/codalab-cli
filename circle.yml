@@ -9,7 +9,7 @@ machine:
 
 dependencies:
   override:
-    - sudo apt-get install -y sshpass
+    - sudo apt-get install -y sshpass python-dev
     - if [ -e ./venv ]; then ./venv/bin/pip install --upgrade setuptools; fi
     - ./setup.sh server
     - ./venv/bin/pip install --upgrade pip
