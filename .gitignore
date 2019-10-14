@@ -67,3 +67,7 @@ doc
 codalab/tests
 codalab/tags
 notes.otl
+
+# Distribution / packaging
+.Python
+env/
