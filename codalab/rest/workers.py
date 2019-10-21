@@ -175,16 +175,19 @@ def finalize_bundle(worker_id, uuid):
         # inconsistencies in the actual contents due to newly created files not
         # be seen. Although, that's very unlikely to give a large difference
         # in the final bundle size.
-        bundle_location = local.bundle_store.get_bundle_location(uuid)
-        for _ in xrange(120):
-            if os.path.exists(bundle_location):
-                break
-            else:
-                time.sleep(1)
-        # If the directory still doesn't exist after 2 minutes, the following
-        # call will return an error.
+        def update_metadata():
+            bundle_location = local.bundle_store.get_bundle_location(uuid)
+            for _ in xrange(120):
+                if os.path.exists(bundle_location):
+                    break
+                else:
+                    time.sleep(1)
+            # If the directory still doesn't exist after 2 minutes, the following
+            # call will return an error.
 
-        local.upload_manager.update_metadata_and_save(bundle, enforce_disk_quota=True)
+            local.upload_manager.update_metadata_and_save(bundle, enforce_disk_quota=True)
+        update_metadata_thread = threading.Thread(update_metadata)
+        update_metadata_thread.start()
 
     print 'Finalized bundle %s' % uuid
     local.model.finalize_bundle(bundle, request.user.user_id,
